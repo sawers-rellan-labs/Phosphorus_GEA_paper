@@ -20,7 +20,6 @@ data_dir<- file.path("..","data")
 # GWAS_id_file <- file.path(data_dir,"GWAS_ID.tab")
 
 
-
 # accn_info <- read.table(file = accn_file, header = TRUE, quote = "",sep ="\t")
 # id_map <- read.table(file = id_map_file, header = TRUE, quote = "", sep = "\t")
 # GWAS_id <- read.table(file = GWAS_id_file, header = FALSE, quote = "", sep ="\t") 
@@ -72,9 +71,7 @@ geo_loc<- id_map %>%
 #     }
 #   }) %>% dplyr::bind_rows()
 # }
-ISOcodes::UN_M.49_Countries
 
-ISOcodes::UN_M.49_Regions
 
 library(sp)
 library(rworldmap)
@@ -87,7 +84,7 @@ get_country_df <- function(x){
     dplyr::arrange(LON,LAT) %>%
     dplyr::distinct()
   nrow(x)
-  countriesSP <- getMap(resolution='low')
+  countriesSP <- getMap(resolution = "high")
 
   pointsSP <- SpatialPoints(points, proj4string=CRS(proj4string(countriesSP))) 
 
@@ -129,6 +126,123 @@ summary(CA_maize$ISO3.1)
 
 summary(MESO_maize$ISO3.1)
 
-# The terms seem to behave identically in his set
+# The terms seem to behave identically in this set
+
+
+sb_latlon_file <- file.path(data_dir, "hapmap_geo_loc.tassel")
+
+sb_geo_loc <- read.table(sb_latlon_file, header = TRUE)
+
+colnames(sb_geo_loc)[1] <- "Taxa"
+
+
+sb_geo_loc
+
+
+sb_country <- get_country_df(
+  data.frame(
+    LON = sb_geo_loc$lon,
+    LAT = sb_geo_loc$lat)
+)
+
+summary(sb_country)
+
+map_points <- rbind(
+    data.frame(
+      sp = "Zea mays",
+      lon = maize_country$LON,
+      lat = maize_country$LAT
+  ),
+  data.frame(
+    sp = "Sorghum bicolor",
+    lon = sb_country$LON,
+    lat = sb_country$LAT
+  )
+) %>%
+  dplyr::filter(!is.na(lon) & !is.na(lat))
+  
+
+map_points
+table(map_points$sp)
+
+####################################################################
+
+library("raster")
+
+
+sol_file <- "/Volumes/GoogleDrive/My\ Drive/repos/soilP/inst/extdata/ISRIC2011/soilP_raster/sol.tif"
+
+# FAO74_file <- 
+sol <- raster::raster(sol_file) 
+
+map_points$sol <- raster::extract(sol,map_points[,c("lon","lat")])
+
+
+
+zm_sol <- map_points %>% 
+  dplyr::filter(sp == "Zea mays") %>% 
+  dplyr::pull(sol)
+
+sb_sol <- map_points %>% 
+  dplyr::filter(sp == "Sorghum bicolor") %>% 
+  dplyr::pull(sol)
+
+zmh <- map_points %>% 
+  dplyr::filter(sp == "Zea mays") %>% 
+  ggplot2::ggplot(aes(x=sol)) + 
+  ggplot2::xlab("Solubility") +
+  ggplot2::ylab("Frequency") +
+  ggplot2::geom_histogram( binwidth =1) + 
+  ggplot2::scale_x_continuous(breaks= 1:12) +
+  ggpubr::theme_classic2()
+
+zmh_grob <-  ggplot2::ggplotGrob(zmh)
+
+
+sbh <- map_points %>% 
+  dplyr::filter(sp == "Sorghum bicolor") %>% 
+  ggplot2::ggplot(aes(x=sol)) + 
+  ggplot2::xlab("Solubility") +
+  ggplot2::ylab("Frequency") +
+  ggplot2::geom_histogram( binwidth =1) + 
+  ggplot2::scale_x_continuous(breaks= 1:12) +
+  ggpubr::theme_classic2()
+
+sbh_grob <-  ggplot2::ggplotGrob(sbh)
+
+
+world <- ggplot2::map_data("world")
+
+
+fig1 <- ggplot2::ggplot(data = world) +
+  ggplot2::ggtitle("Soil Phosphorus Map") +
+  ggplot2::coord_sf(ylim = c(-35, 35), 
+                    xlim = c(-105, 85)) + 
+  ggplot2::annotation_custom(grob = zmh_grob, xmin = -115, xmax = -75, 
+                    ymin = -40, ymax = 0) + 
+  ggplot2::annotation_custom(grob = sbh_grob, xmin = -25, xmax = 15, 
+                    ymin = -40, ymax = 0) +
+  ggplot2::geom_map(map = world, 
+                    ggplot2::aes(x =long, y = lat, map_id = region),
+                    fill = NA, lwd = 0.2, color = "black") +
+  ggplot2::geom_point(data = map_points,  ggplot2::aes( lon, lat, color = sol), size = 0.5) +
+  ggplot2::scale_color_viridis_c(breaks = 0:12) +
+  ggplot2::labs(color='Solubility')+
+  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                 panel.border = element_blank(),
+                 panel.grid.major = ggplot2::element_line(colour = 'transparent'),
+                 legend.key = ggplot2::element_rect(fill = NA),
+                 legend.key.size = ggplot2::unit(2, 'lines'),
+                 axis.line=element_blank(),
+                 axis.text.x=element_blank(),
+                 axis.text.y=element_blank(),
+                 axis.ticks=element_blank(),
+                 axis.title.x=element_blank(),
+                 axis.title.y=element_blank(),
+                 panel.grid.minor=element_blank())
+
+
+
+ggsave("../Fig1_SoilMap.png",dpi = 300, height = 7, width =15)
 
 
