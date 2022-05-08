@@ -245,4 +245,6 @@ fig1 <- ggplot2::ggplot(data = world) +
 
 ggsave("../Fig1_SoilMap.png",dpi = 300, height = 7, width =15)
 
+save(map_points, file = "../data/grassGEA_geo_loc.Rdata")
+load("../data/grassGEA_geo_loc.Rdata")
 
