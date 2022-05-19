@@ -248,3 +248,70 @@ ggsave("../Fig1_SoilMap.png",dpi = 300, height = 7, width =15)
 save(map_points, file = "../data/grassGEA_geo_loc.Rdata")
 load("../data/grassGEA_geo_loc.Rdata")
 
+
+traits <- read.csv("../data/grassGEA_phenotypes.csv", row.names = 1)
+colnames(traits)
+summary(traits$PBR1)
+
+traits[traits==-999] <- NA
+
+summary(traits$PBR1)
+
+# quartz()
+# hist(traits[,4:ncol(traits)] %>% as.matrix())
+
+ornl_vars <- c("tot", "lab","org", "occ", "sec", "apa")
+
+colnames(traits)
+traits <-  traits %>% 
+  dplyr::select(sp, lon,lat, starts_with("sol"),
+                -starts_with("ret"),
+                all_of(ornl_vars), starts_with("stp"),
+                PBR1:TP2, NPlim, ext_P20)
+colnames(traits)
+write.csv(traits, file = "grassGEA_phenotypes.csv")
+
+M <- cor(traits[4:ncol(traits)],
+    use = "pairwise.complete.obs")
+
+library(corrplot)
+quartz()
+corrplot(M, type="upper")
+M["sol", "PNZ1"]
+M["sol", "PNZ2"]
+M["sol", "PBR1"]
+
+
+library(ggplot2)
+library(tidyr)
+
+quartz()
+traits %>% 
+  dplyr::filter(sp == "Zea mays") %>%
+  dplyr::select(-sp) %>%
+  summarise_all(list(~is.na(.)))%>%
+  pivot_longer(everything(),
+               names_to = "variables", values_to="missing") %>%
+  count(variables, missing) %>%
+  dplyr::mutate(variables = factor(variables, levels= c("lat","lon",colnames(M)))) %>%
+  dplyr::arrange(variables) %>%
+  ggplot(aes(y=variables,x=n,fill=missing)) +
+  ggplot2::ggtitle("Zea mays") +
+  ggplot2::scale_fill_manual(values =c("white", "black")) +
+  geom_col()
+
+
+quartz()
+traits %>% 
+  dplyr::filter(sp == "Sorghum bicolor") %>%
+  dplyr::select(-sp) %>%
+  summarise_all(list(~is.na(.)))%>%
+  pivot_longer(everything(),
+               names_to = "variables", values_to="missing") %>%
+  count(variables, missing) %>%
+  dplyr::mutate(variables = factor(variables, levels= c("lat","lon",colnames(M)))) %>%
+  dplyr::arrange(variables) %>%
+  ggplot(aes(y=variables,x=n,fill=missing)) +
+  ggplot2::ggtitle("Sorghum bicolor") +
+  ggplot2::scale_fill_manual(values =c("white", "black")) +
+  geom_col()
