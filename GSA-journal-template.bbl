@@ -1,0 +1,21 @@
+\begin{thebibliography}{3}
+
+\bibitem[{Falush {\em et~al.\/}}(2016){Falush, van Dorp, {\rm and}
+  Lawson}]{Falush16}
+{Falush D, van Dorp L, Lawson D}. 2016. A tutorial on how (not) to
+  over-interpret {STRUCTURE}/{ADMIXTURE} bar plots. bioRxiv.
+  \url{http://www.biorxiv.org/content/early/2016/07/28/066431}.
+
+\bibitem[{Neher {\rm and} Hallatschek}(2013)]{neher2013genealogies}
+{Neher RA, Hallatschek O}. 2013. Genealogies of rapidly adapting populations.
+  Proc Natl Acad Sci. 110:437--442.
+
+\bibitem[{R{\"o}delsperger {\em et~al.\/}}(2014){R{\"o}delsperger, Neher,
+  Weller, Eberhardt, Witte, Mayer, Dieterich, {\rm and}
+  Sommer}]{rodelsperger2014characterization}
+{R{\"o}delsperger C, Neher RA, Weller AM, Eberhardt G, Witte H, Mayer WE,
+  Dieterich C, Sommer RJ}. 2014. Characterization of genetic diversity in the
+  nematode pristionchus pacificus from population-scale resequencing data.
+  Genetics. 196:1153--1165.
+
+\end{thebibliography}

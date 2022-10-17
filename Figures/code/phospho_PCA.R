@@ -6,6 +6,9 @@ require(dplyr)
 require(MASS)
 require(reshape2)
 require(cowplot)
+
+traits <- read.csv("../data/grassGEA_phenotypes.csv", row.names = 1)
+
 colnames(traits)
 dat <- traits[4:ncol(traits)]
 
@@ -53,10 +56,22 @@ circleFun <- function(center = c(0,0),diameter = 1, npoints = 100){
 circ <- circleFun(c(0,0),2,npoints = 500)
 
 
-p <- ggplot(data = dat, aes(x = pc1, y = pc2)) + geom_point()
+p <- ggplot(data = dat, aes(x = pc1, y = pc2, col = traits$sol)) + geom_point() +
+  
+  geom_hline(yintercept = 0, lty = 2) +
+  
+  geom_vline(xintercept = 0, lty = 2) +
+  
+  geom_point(alpha = 0.8) + xlab ("PC1 (23%)" ) + ylab ("PC2 (17%)" ) +
+  
+  ggplot2::scale_color_viridis_c() +
+  ggplot2::labs(col="sol")
+  
+  
+
 
 quartz()
-
+p
 
 
 p <- ggplot(data = dat, aes(x = pc1, y = pc2, color = traits$sp, shape = traits$sp)) +
@@ -67,7 +82,7 @@ p <- ggplot(data = dat, aes(x = pc1, y = pc2, color = traits$sp, shape = traits$
   
   geom_point(alpha = 0.8) + xlab ("PC1 (23%)" ) + ylab ("PC2 (17%)" )
 
-
+traits$sol
 
 quartz()
 p

@@ -139,6 +139,12 @@ colnames(sb_geo_loc)[1] <- "Taxa"
 sb_geo_loc
 
 
+# maize_country <- get_country_df(
+#  data.frame(
+#    LON = geo_loc$locations_longitude,
+#    LAT = geo_loc$locations_latitude)
+#)
+
 sb_country <- get_country_df(
   data.frame(
     LON = sb_geo_loc$lon,
@@ -271,6 +277,7 @@ traits <-  traits %>%
 colnames(traits)
 write.csv(traits, file = "grassGEA_phenotypes.csv")
 
+
 M <- cor(traits[4:ncol(traits)],
     use = "pairwise.complete.obs")
 
@@ -315,3 +322,144 @@ traits %>%
   ggplot2::ggtitle("Sorghum bicolor") +
   ggplot2::scale_fill_manual(values =c("white", "black")) +
   geom_col()
+
+
+colnames(maize_country)
+colnames(traits)
+
+
+# Redo Figure1 with NZ phosphorus
+
+
+maize_country <- 
+  cbind(taxa = geo_loc$taxa,
+        get_country_df(
+           data.frame(
+             LON = geo_loc$locations_longitude,
+             LAT = geo_loc$locations_latitude)
+          )
+  ) %>% filter(sp=="Zea mays") %>%
+  right_join(traits %>% filter(sp=="Zea mays") %>% unique(),
+             by = c(LON ="lon",LAT ="lat")) %>% 
+  dplyr::select(sp, taxa, everything())
+
+nrow(maize_country)
+nrow(geo_loc)
+
+sb_country <-   
+  cbind( taxa = sb_geo_loc$Taxa,
+        get_country_df(
+      data.frame(
+        LON = sb_geo_loc$lon,
+        LAT = sb_geo_loc$lat)
+    )
+  ) %>% unique() %>% filter(sp=="Sorghum bicolor") %>%
+  right_join(traits %>% filter(sp=="Sorghum bicolor") %>% unique(),
+             by = c(LON ="lon",LAT ="lat")) %>% 
+  dplyr::select(sp, taxa, everything())
+
+table(sb_country$GEO3) %>%
+  as.data.frame() %>% 
+  arrange(-Freq) %>%  
+  filter (Freq>0)
+
+table(sb_country$AVOIDname) %>% 
+  as.data.frame() %>%
+  arrange(-Freq) %>%  
+  filter (Freq>0)
+
+
+nrow(sb_country)
+
+summary(sb_country)
+
+map_points <- rbind(
+  data.frame(
+    sp = "Zea mays",
+    lon = maize_country$LON,
+    lat = maize_country$LAT, 
+    sol = maize_country$sol,
+    PNZ1 = maize_country$PNZ1
+  ),
+  data.frame(
+    sp = "Sorghum bicolor",
+    lon = sb_country$LON,
+    lat = sb_country$LAT, 
+    sol = sb_country$sol,
+    PNZ1 = sb_country$PNZ1
+  )
+) %>%
+  dplyr::filter(!is.na(lon) & !is.na(lat) & !is.na(PNZ1) ) 
+  
+
+hist(map_points$PNZ1)
+map_points
+table(map_points$sp)
+
+
+write.csv(map_points,"ptraits_geo.csv")
+
+library("raster")
+
+
+zmh <- map_points %>% 
+  dplyr::filter(sp == "Zea mays") %>% 
+  ggplot2::ggplot(aes(x=PNZ1/1000)) + 
+  ggplot2::xlab("Available P") +
+  ggplot2::ylab("Frequency") +
+  ggplot2::geom_histogram(binwidth = 0.5) + 
+  ggplot2::scale_x_continuous(breaks= 2*(0:4)) +
+  xlim(0,8) +
+  ggpubr::theme_classic2()
+
+
+zmh_grob <-  ggplot2::ggplotGrob(zmh)
+
+
+sbh <- map_points %>% 
+  dplyr::filter(sp == "Sorghum bicolor") %>% 
+  ggplot2::ggplot(aes(x=PNZ1/1000)) + 
+  ggplot2::xlab("Available P") +
+  ggplot2::ylab("Frequency") +
+  ggplot2::geom_histogram(binwidth = 0.5) + 
+  ggplot2::scale_x_continuous(breaks= 2*(0:4)) +
+  xlim(0,8) +
+  ggpubr::theme_classic2()
+
+sbh_grob <-  ggplot2::ggplotGrob(sbh)
+
+
+world <- ggplot2::map_data("world")
+
+fig1<-NULL
+fig1 <- ggplot2::ggplot(data = world) +
+  ggplot2::ggtitle("Soil Phosphorus Map") +
+  ggplot2::coord_sf(ylim = c(-35, 35), 
+                    xlim = c(-105, 85)) + 
+  ggplot2::annotation_custom(grob = zmh_grob, xmin = -115, xmax = -75, 
+                             ymin = -40, ymax = 0) + 
+  ggplot2::annotation_custom(grob = sbh_grob, xmin = -25, xmax = 15, 
+                             ymin = -40, ymax = 0) +
+  ggplot2::geom_map(map = world, 
+                    ggplot2::aes(x =long, y = lat, map_id = region),
+                    fill = NA, lwd = 0.2, color = "black") +
+  ggplot2::geom_point(data = map_points,  ggplot2::aes( lon, lat, color = PNZ1/1000), size = 0.5) +
+  ggplot2::scale_color_viridis_c(limits = c(1, 6), oob = scales::squish) +
+  ggplot2::labs(color='Available P')+
+  ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white"),
+                 panel.border = element_blank(),
+                 panel.grid.major = ggplot2::element_line(colour = 'transparent'),
+                 legend.key = ggplot2::element_rect(fill = NA),
+                 legend.key.size = ggplot2::unit(2, 'lines'),
+                 axis.line=element_blank(),
+                 axis.text.x=element_blank(),
+                 axis.text.y=element_blank(),
+                 axis.ticks=element_blank(),
+                 axis.title.x=element_blank(),
+                 axis.title.y=element_blank(),
+                 panel.grid.minor=element_blank())
+
+quartz()
+fig1
+
+
