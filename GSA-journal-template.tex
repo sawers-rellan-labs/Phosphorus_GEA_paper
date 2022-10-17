@@ -84,20 +84,43 @@ In individual organisms where a mutant is being studied, the rationale for the s
 \section{Materials and methods}
 \label{sec:materials:methods}
 
-Manuscripts submitted to GENETICS should contain a clear description of the experimental design in sufficient detail so that the experimental analysis could be repeated by another scientist. If the level of detail necessary to explain the protocol goes beyond two paragraphs, give a short description in the main body of the paper and prepare a detailed description for supporting information.  For example, details would include indicating how many individuals were used, and if applicable how individuals or groups were combined for analysis. If working with mutants indicate how many independent mutants were isolated. If working with populations indicate how samples were collected and whether they were random with respect to the target population.
+
+%Manuscripts submitted to GENETICS should contain a clear description of the experimental design in sufficient detail so that the experimental analysis could be repeated by another scientist. If the level of detail necessary to explain the protocol goes beyond two paragraphs, give a short description in the main body of the paper and prepare a detailed description for supporting information.  For example, details would include indicating how many individuals were used, and if applicable how individuals or groups were combined for analysis. If working with mutants indicate how many independent mutants were isolated. If working with populations indicate how samples were collected and whether they were random with respect to the target population.
+
+\subsection*{Genome Environment Association}
+
+We used GBS genotypes and geolocation of 4711 maize landrace samples from Latin America and the Caribbean  \cite{romeronavarro2017}, in which there where 1584871 biallelic imputed SNPs (AGP\_v2). Then I selected  the 'GWAS dataset' as the 503016 markers with minor allele frequency greater than 0.01 in the 3238 georeferenced unrelated accessions (see below). 
+
+The idea of a genome environment association is using environmental variables instead  of plant phenotypes as response variables \cite{lasky2015}. Here we use the soil phosphorus availability potential, both, as class probabilities and as summarizing scale from \cite{batjes2011}. We built \texttt{soilP} \cite{rodriguez-zapata2018}, an R package for extracting values from the Global Phosphorus Retention Potential Map and assigning them to arbitrary geographic locations. The soilP package and the detailed phosphorus variable extraction procedures are available at \url{https://github.com/sawers-rellan-labs/soilP}.
+
+
+In order to correct for population structure I calculated the ancestry matrix $\mathbf{Q}$ for different number of postulated sub populations $K$ using the model based estimation from ADMIXTURE \cite{alexander2009}. However ADMIXTURE assumes that genotypes come from unrelated organisms and unlinked markers, hereafter named the 'structure dataset'. 
+We searched a high quality matrix consisting of 6456 unimputed markers in 4511 individuals. 
+Using \texttt{vcftools} \cite{danecek2011}, We estimated both the plant relatedness coefficient $\phi$  according to the Manichaikul \cite{manichaikul2010} method,  and marker linkage disequibrium through $r^2$. This allowed us to use \texttt{fastindep} \cite{abraham2014} to arrive at a 'structure dataset' comprising 4368 unrelated plants at $\phi < \num{1e-6}$ and 4908 unlinked SNPs at $r^2 < 0.1$. 
+Once this dataset fulfilled  ADMIXTURE's independence assumptions I estimated $\mathbf{Q}$ for $K = \{1 \ldots 50\}$ using its unsupervised method. Instead of using the Evanno $\Delta K$ method \cite{evanno2005}  for estimating the optimal number of subpopulations $K$ I used  ADMIXTURE's cross-validation criterion that requires less computational effort as it replaces complete dataset runs with runs of partially masked data (folds) \cite{alexander2009,lawson2018}.
+In this way I found  28 to be the optimal $K$, minimizing the cross validation error calculated from 5 fold runs \ref{figCV}. Then through ADMIXTURE's supervised method I projected the resulting ancestry on the individuals excluded from the 'structure dataset' for $K = \{3,10,28\}$  spanning a range up to the maximum reasonable $K$. 
+After estimating ancestry for all the original 4711 landraces I finnally subsetted the $\mathbf{Q}$ matrix corresponding to the georeferenced unrelated common variants or 'GWAS dataset'. 
+
+We ran as GLM models for each environmental variable  dependent on landrace genotypes with command line TASSEL 5 \cite{bradbury2007} using custom made shell scripts. $\mathbf{\{Q0, Q3, Q10, Q28\}}$ corresponding to no correction, and correction given the selected subpopulation numbers $K = \{3,10,28\}$ 
+
+\subsection*{Biparental Populations Analysis}
+
+% In order to clarify the role of \textit{Inv4m} in the adaptation to low soil phosphorus availability I can make use of biparental populations derived from  B73 X MICH21 crosses.
+% B73 is a temperate inbred that has been used as the reference genome for maize \cite{schnable2009}, while MICH21 is a highland adapted landrace \cite{vielle-calzada2009}. 
+
 
 
 \subsection{Statistical analysis}
 
-Indicate what statistical analysis has been performed; not just the name of the software and options selected, but the method and model applied. In the case of many genes being examined simultaneously, or many phenotypes, a multiple comparison correction should be used to control the type I error rate, or a rationale for not applying a correction must be provided. The type of correction applied should be clearly stated. It should also be clear whether the p-values reported are raw, or after correction. Corrected p-values are often appropriate, but raw p-values should be available in the supporting materials so that others may perform their own corrections. In large scale data exploration studies (e.g. genome wide expression studies) a clear and complete description of the replication structure must be provided.
+% Indicate what statistical analysis has been performed; not just the name of the software and options selected, but the method and model applied. In the case of many genes being examined simultaneously, or many phenotypes, a multiple comparison correction should be used to control the type I error rate, or a rationale for not applying a correction must be provided. The type of correction applied should be clearly stated. It should also be clear whether the p-values reported are raw, or after correction. Corrected p-values are often appropriate, but raw p-values should be available in the supporting materials so that others may perform their own corrections. In large scale data exploration studies (e.g. genome wide expression studies) a clear and complete description of the replication structure must be provided.
 
 \section{Results and discussion}
 
-The results and discussion should not be repetitive and give a factual presentation of the data with all tables and figures referenced. The discussion should not summarize the results but provide an interpretation of the results, and should clearly delineate between the findings of the particular study and the possible impact of those findings in a larger context. Authors are encouraged to cite recent work relevant to their interpretations. Present and discuss results only once, not in both the Results and Discussion sections. It is acceptable to combine results and discussion in order to be succinct.
+% The results and discussion should not be repetitive and give a factual presentation of the data with all tables and figures referenced. The discussion should not summarize the results but provide an interpretation of the results, and should clearly delineate between the findings of the particular study and the possible impact of those findings in a larger context. Authors are encouraged to cite recent work relevant to their interpretations. Present and discuss results only once, not in both the Results and Discussion sections. It is acceptable to combine results and discussion in order to be succinct.
 
 \section{Figures and tables}
 
-Figures and Tables should be labelled and referenced in the standard way using the \verb|\label{}| and \verb|\ref{}| commands.
+# Figures and Tables should be labelled and referenced in the standard way using the \verb|\label{}| and \verb|\ref{}| commands.
 
 \subsection{ Geographical distribution of landraces mirrors phosphorus distribution}
 
@@ -106,7 +129,8 @@ Figure \ref{fig:SoilMap} shows an example figure.
 \begin{figure*}[ht]
 \centering
 \includegraphics[width=0.8\paperwidth]{Figures/Fig1_SoilMap.png}
-\caption{Phosphorus Distribution For Maize And Sorghum Samples}
+\caption{\bf{Phosphorus Distribution For Maize And Sorghum Samples} Top: 3700 maize samples from \cite{romeronavarro2017} and 2700 from \cite{lasky2015} show the variability of predicted soil  phosphorus solubility \cite{batjes2011}. Bottom: Soil types by solubility class, most low solubility soils are Andosols and Acrisols for maize while Ferralsols and nitosols are the most frequent for sorghum. In the high avalibility class  Regososls are most frequent for maize and arenosols for sorghum}
+
 %Example figure from \url{10.1534/genetics.114.173807}. Please include your figures in the manuscript for the review process. You can upload figures to Overleaf via the Project menu. Images of photographs or paintings can be provided as raster images. Common examples of raster images are .tif/.tiff, .raw, .gif, and .bmp file types. The resolution of raster files is measured by the number of dots or pixels in a given area, referred to as “dpi” or “ppi.”
 % \begin{itemize}
 % \item  minimum resolution required for printed images or pictures: 350dpi
